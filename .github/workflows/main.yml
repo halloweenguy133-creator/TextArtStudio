@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p extracted
-          unzip -o TextArtStudio_GitHub_Build.zip -d extracted
+          unzip -o TextArtStudio_GitHub_Build (2).zip -d extracted
           SETTINGS_FILE="$(find extracted -name settings.gradle.kts -print -quit)"
           test -n "$SETTINGS_FILE"
           PROJECT_DIR="$(dirname "$SETTINGS_FILE")"

@@ -1,3 +1,4 @@
+
 name: Build TextArt Studio APK
 
 on:
@@ -11,7 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Download repository files
         uses: actions/checkout@v4
@@ -27,16 +27,25 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Extract Android project
+      - name: Find and extract ZIP
         shell: bash
         run: |
           set -euxo pipefail
+          ZIP_FILE="$(find . -path './.git' -prune -o -path './extracted' -prune -o -type f -iname '*.zip' -print -quit)"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: ZIP archive not found in repository"
+            exit 1
+          fi
+          echo "Found archive: $ZIP_FILE"
           mkdir -p extracted
-          unzip -o TextArtStudio_GitHub_Build (2).zip -d extracted
+          unzip -o "$ZIP_FILE" -d extracted
           SETTINGS_FILE="$(find extracted -name settings.gradle.kts -print -quit)"
-          test -n "$SETTINGS_FILE"
-          PROJECT_DIR="$(dirname "$SETTINGS_FILE")"
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "ERROR: Android project not found inside ZIP"
+            find extracted -maxdepth 3 -type f
+            exit 1
+          fi
+          echo "PROJECT_DIR=$(dirname "$SETTINGS_FILE")" >> "$GITHUB_ENV"
 
       - name: Build APK
         run: gradle --no-daemon -p "$PROJECT_DIR" assembleDebug
